@@ -1,0 +1,6 @@
+data/*
+data_*
+*.bin
+__pycache__
+*.pdf
+*.png
