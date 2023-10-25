@@ -1,0 +1,62 @@
+01/06/2023
+I have read the paper of TrOCR and it is very interesting.
+They use a transformer encoder-decoder to predict the text from the image. The encoder is initalized with an image transformer called BEiT, which you can also use directly since it is not language dependent. The decoder is initalized with RoBERTa, which I'm sure you can find a Spanish version. Then they pre-train the whole model first with printed test extracted from pdfs, and then with handwritten text, mainly generated with TRDG (https://github.com/Belval/TextRecognitionDataGenerator), but also other.
+The next step is to start the work to train yourself a Spanish version of TrOCR. The challenge will be in finding the data to pretrain the model because the initialization won't be hard. You can start with TRDG and overfit to it to see if it works. If it does, think about getting all those pdfs and understanding how they did that.
+
+03/06/2023
+Generating images with TRDG is very simple in the command line. Maybe you can generate them on Python on the fly to make the training easier and faster, but for now don't focus on this.   
+Focus on trying to build a model by loading DEiT and RoBERTa (in Spanish) and connecting them together. I think that you are going to have to learn a lot of PyTorch to do this :)
+Link to RoBERTa: https://huggingface.co/PlanTL-GOB-ES/roberta-base-bne
+Link to DEiT: https://huggingface.co/microsoft/beit-base-patch16-224 (although this has a linear layer at the end?)
+
+04/06/2023
+I now have a more or less clear idea on how to create the model. Everything in Hugging Face is a torch module. You can create the encoder as the DEiT and the decoder as RoBERTa (you can add cross attention even when creating the model). What I now have to find is how to write the forward method so that the output of the DEiT is the input to the cross attention layer in the decoder. Also you need to check what the is_decoder argument actually doing. My guess is that it feeds the output to the input of the decoder.
+Here is a link where all the layers in RoBERTa are defined: https://github.com/huggingface/transformers/blob/main/src/transformers/models/roberta/modeling_roberta.py
+
+11/06/2023
+I found a super easy way of initializing the model with the pre-train weights. It is the EncoderDecoderModel class from Hugging Face. I have it in the last cell of the notebook. It looks like everything is well initialized, with only random weights on the cross-attention layers of the decoder, which is expected. Now you can start the pre-training and see if it works! 
+
+12/06/2023
+I managed to initialize the model and run an image through it! Now you have to train it!
+
+18/06/2023
+I have started to write the trianing loop and dataloader. It is giving an error when I try to process data through the model.
+
+20/07/2023
+I am debugging why the model gives an error when given pixel_values and labels. I have advanced quite a bit from before. The problem before was that X has too many dimensions (it has a 1 dimension in the middle) and this should be corrected. Now the problem is something with the embedding dimensions. I am running it on cpu because on cuda the log of the error is much worse. Here is a stack overflow question very similar to yours: https://stackoverflow.com/questions/62081155/pytorch-indexerror-index-out-of-range-in-self-how-to-solve
+
+23/07/02023
+Bug solved and training and testing are working well! Now I have launched a small training and the trained model always outputs "<s> de de de de ...", which is obviously wrong. Try to overfit to one sample, etc. The error might come from the fact that the image input to the net is not readable because of the previous transformation. A shape of 224x224 is not the best for a picture of handwritten letters. Maybe see how they solve this in the paper.
+You can only use a batch size of 1 because the GPU does not fit more. Maybe you can optimize code and variables to improve time and space efficiency, you haven't done this yet.
+Use train.py to launch trainings and trainer.py to debug.
+
+09/08/2023
+You haven't advanced anything on the coding, but you have been reading a few things, specially about the 224x224 shape. From what I understand, it is not required to have specifically that size. That image is converted into square patches, which are then flattened and fed into the transformer one by one. Therefore, what should be equal is the size of the patches (16x16), and maybe the number of patches (although this I'm not sure, I suppose they could vary like text transformer can vary the lenght of the input sentence). But the input image can be different. If the number of patches is fixed, it means I need 196 patches of 16x16, so I can size the input image as I want under those constrains. I could do 1568x32 for example. You need to check where the patching is done, I suspect that at the first layer of the model.
+The BeitImageProcessor does not have learnable parameters, it is simply resizing, rescaling, etc. the input image. You can see it here (method _preprocess): https://github.com/huggingface/transformers/blob/main/src/transformers/models/beit/image_processing_beit.py#L178
+
+In any case, before starting that you shuold make sure that you undersant well everything related to the transformers, including what each token is.
+
+15/08/2023
+I am trying to initialize the model so that it accepts image sizes different than 224x224. I am trying with 909x32 as an example. It looks like I can pass a dictionary to the method "from_petrained" with extra arguments like the image size of the encoder. However, it doesn't seem to do anything. If I directly pass the encoder_image_size as an argument (instead of as part of a dict), then the call to from_pretrained fails because it says that some parameters from the encoding layer were not able to be copied because of different size. On the one hand, I don't fully understand why, since the patch size is still the same (16x16). On the other hand, it is good because at least it is trying to change the input size, which it doesn't seem to be the case with the dictionary.
+Continue working on this. You are doing it in training.ipynb, you have left some comments to help you continue.
+
+29/09/2023
+Arghhh still same problem. I don't know how to create a config file and pass it to the model!!! This seems to be the way of changing the image size, which I hope will solve everything.
+
+30/09/2023
+Problem solved! I finally managed to change the size of the input image. Now you have to change the dataset class so that it pads all the images with the same size. You'll have to read how this padding works. There seems to be code in Hugging Face to do this: https://github.com/huggingface/transformers/blob/main/src/transformers/image_transforms.py
+
+04/10/2023
+I have decided to resize every image to 32x1200m as it seems somewhere in the middle for the whole dataset. I have checked and the images are quite readable, so this should be good for now and no need for padding.
+Ok, so I have launched a first training and everything seems to work! The results are not very optimistic though. If I train with one single sample all the time, the model ends up outputing many times the word that appears more often in the label. Why does it repeat the word instead of selecting others?
+
+06/10/2023
+You haven't advanced much. There is a Trainer class in Hugging Face and you want to try it out to finetune your model, maybe that makes it work. You are starting that at the end of training.ipynb. On the other hand, I also want to finetune an English model following one of the notebooks examples, to see if I get the same problem. You have started that in original.ipynb.
+
+17/10/2023
+I have followed the tutorial to fine-tune TrOCR with IAM dataset, and I think that I am having the same problem as I have with the Spanish dataset. The GPU is not able to store the data, so I do it with CPU and very little data (5 samples and batch size of 1). I see the loss decreasing, but the output is a mix of the most common words in the sentence.
+I think you have to see how to train one of these models in a cloud GPU. Maybe try with Google Collab. -> UPDATE: I have tried to run the English finetuning in Collab and it allows for a bigger batch size although it is painfully slow. Also, I get an out of memory error when the second epoch starts. Maybe you need to disable the accumulate_grad or something like that?
+
+18/10/2023
+I have trained the english model in collab with a small subset of data and I'm more or less happy with the result. I manage to get an output that has two or three words from the label.
+Now working to see if I get the same for Spanish. You shuold try to run stuff in your GPU, it is way more comfortable. Maybe start with batch size of 1, at least to see that the input to the model (the patches?) makes sense.
