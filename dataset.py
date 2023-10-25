@@ -40,4 +40,5 @@ class OCRDataset(Dataset):
         labels = labels.to(self.device)
         attention_masks = tokenizer_output['attention_mask']
         attention_masks = attention_masks + [0] * pad_length
+        attention_masks = torch.tensor(attention_masks)
         return pixel_values, labels, attention_masks

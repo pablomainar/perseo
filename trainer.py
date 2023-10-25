@@ -19,11 +19,12 @@ class Trainer():
             self.optimizer.zero_grad()
             X = X.to(self.device)
             y = y.to(self.device)
-            loss = self.model(pixel_values=X, labels=y).loss
-            loss.backward()
+            mask = mask.to(self.device)
+            loss = self.model(pixel_values=X, labels=y, decoder_attention_mask=mask).loss
+            loss.sum().backward()
             self.optimizer.step()
             if batch % 100 == 0:
-                print(f"Training: Batch {batch} Loss {loss.item()}")
+                print(f"Training: Batch {batch} Loss {loss.sum()}")
         
     def test_loop(self, dataloader):
         self.model.eval()
@@ -31,6 +32,7 @@ class Trainer():
             for batch, (X,y, mask) in enumerate(dataloader):
                 X = X.to(self.device)
                 y = y.to(self.device)
-                loss = self.model(pixel_values=X, labels=y).loss
+                mask = mask.to(self.device)
+                loss = self.model(pixel_values=X, labels=y, decoder_attention_mask=mask).loss
                 if batch % 100 == 0:
-                    print(f"Testing: Batch {batch} Loss {loss.item()}")
+                    print(f"Testing: Batch {batch} Loss {loss.sum()}")

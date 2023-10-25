@@ -60,3 +60,6 @@ I think you have to see how to train one of these models in a cloud GPU. Maybe t
 18/10/2023
 I have trained the english model in collab with a small subset of data and I'm more or less happy with the result. I manage to get an output that has two or three words from the label.
 Now working to see if I get the same for Spanish. You shuold try to run stuff in your GPU, it is way more comfortable. Maybe start with batch size of 1, at least to see that the input to the model (the patches?) makes sense.
+
+25/10/2023
+I am now training in a bigger machine and I can finally train on a larger batch size. Still the problem is the same that the network is barely learning, and it converges to only generate "de". Whyyyyyy
