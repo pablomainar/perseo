@@ -1,5 +1,8 @@
 data/*
 data_*
+wikipedia*
+tmp*
+models/
 *.bin
 __pycache__
 *.pdf
