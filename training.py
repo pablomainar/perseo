@@ -5,14 +5,18 @@ from peft import LoraConfig, get_peft_model
 import torch
 from torch.utils.data import DataLoader
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-tokenizer = RobertaTokenizer.from_pretrained('PlanTL-GOB-ES/roberta-base-bne')
-model_trocr = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-small-stage1")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+tokenizer = RobertaTokenizer.from_pretrained("PlanTL-GOB-ES/roberta-base-bne")
+model_trocr = VisionEncoderDecoderModel.from_pretrained(
+    pretrained_model_name_or_path="microsoft/trocr-small-stage1")
 encoder = model_trocr.encoder
 encoder.save_pretrained("pretrained_encoder")
 encoder_config = encoder.config
-encoder_config.image_size = (64,2304) 
-model = VisionEncoderDecoderModel.from_encoder_decoder_pretrained("pretrained_encoder", 'PlanTL-GOB-ES/roberta-base-bne', encoder_config=encoder_config) 
+encoder_config.image_size = (64, 2304)
+model = VisionEncoderDecoderModel.from_encoder_decoder_pretrained(
+    encoder_pretrained_model_name_or_path="pretrained_encoder",
+    decoder_pretrained_model_name_or_path="PlanTL-GOB-ES/roberta-base-bne'",
+    encoder_config=encoder_config)
 
 model.config.decoder_start_token_id = tokenizer.cls_token_id
 model.config.pad_token_id = tokenizer.pad_token_id
@@ -39,6 +43,11 @@ test_dataset = OCRDataset(tokenizer=tokenizer, device=device, test=True)
 train_dataloader = DataLoader(train_dataset, batch_size=6, shuffle=True)
 test_dataloader = DataLoader(test_dataset, batch_size=6, shuffle=True)
 optimizer = torch.optim.AdamW(params=model.parameters(), lr=5e-5)
-trainer = Trainer(model=model, optimizer=optimizer, device=device, nb_epochs=100)
-trainer.train(train_dataloader=train_dataloader, test_dataloader=test_dataloader)
-
+trainer = Trainer(
+    model=model,
+    optimizer=optimizer,
+    device=device,
+    nb_epochs=100)
+trainer.train(
+    train_dataloader=train_dataloader,
+    test_dataloader=test_dataloader)
