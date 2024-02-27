@@ -31,27 +31,27 @@ def preprocess_text(text, min_words=None, max_words=None):
 
 
 def store_data(process_id, generator, labels_dict, sentences_per_process):
-        labels = {}
-        labels["path"] = []
-        labels["text"] = []
-        df = pd.DataFrame(labels)
-        for count, (image, text) in enumerate(generator):
-            if image is None:
-                print("Image is None: ", count, text)
-                continue
-            name = process_id*sentences_per_process + count
-            sample_path = os.path.join(datapath, set_, str(name)+".jpg")
-            image.save(sample_path)
-            labels_dict[name] = text
-            labels["path"].append(str(name)+".jpg")
-            labels["text"].append(text)
-            if count % 1000 == 0:
-                df = pd.concat([df, pd.DataFrame(labels)])
-                df.to_csv(os.path.join(datapath, set_+".csv"), index=False)
-                labels = {}
-                labels["path"] = []
-                labels["text"] = []
-                
+    labels = {}
+    labels["path"] = []
+    labels["text"] = []
+    df = pd.DataFrame(labels)
+    for count, (image, text) in enumerate(generator):
+        if image is None:
+            print("Image is None: ", count, text)
+            continue
+        name = process_id*sentences_per_process + count
+        sample_path = os.path.join(datapath, set_, str(name)+".jpg")
+        image.save(sample_path)
+        labels_dict[name] = text
+        labels["path"].append(str(name)+".jpg")
+        labels["text"].append(text)
+        if count % 1000 == 0:
+            df = pd.concat([df, pd.DataFrame(labels)])
+            df.to_csv(os.path.join(datapath, set_+".csv"), index=False)
+            labels = {}
+            labels["path"] = []
+            labels["text"] = []
+
 
 if __name__ == "__main__":
     set_ = "test"
@@ -60,11 +60,10 @@ if __name__ == "__main__":
 
     print("Loading dataset...")
     list_ds = pkl.load(open("../wikipedia_test.pkl", "rb"))
-    
+
     print("Starting...")
     sentences = []
     print(len(list_ds))
-
 
     for count, entry in enumerate(list_ds):
         text = entry["text"].numpy().decode("utf-8")
@@ -77,9 +76,15 @@ if __name__ == "__main__":
                  for i in range(0, len(sentences), sentences_per_process)]
     sentences = sentences[:nb_processes]
 
-    fonts = [os.path.abspath(os.path.join("fonts", "ttfs", p)) for p in os.listdir(os.path.join("fonts", "ttfs"))]
+    fonts = [os.path.abspath(os.path.join("fonts", "ttfs", p))
+             for p in os.listdir(os.path.join("fonts", "ttfs"))]
 
-    generators = [GeneratorFromStrings(sentences[i], language="es", count=sentences_per_process, fonts=fonts) for i in range(nb_processes)]
+    generators = [GeneratorFromStrings(
+                    sentences[i],
+                    language="es",
+                    count=sentences_per_process,
+                    fonts=fonts)
+                  for i in range(nb_processes)]
     manager = Manager()
     labels_dict = manager.dict()
 

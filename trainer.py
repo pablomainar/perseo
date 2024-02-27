@@ -4,7 +4,7 @@ import os
 
 
 class Trainer():
-    def __init__(self,characters_mode, model, optimizer, device, nb_epochs):
+    def __init__(self, characters_mode, model, optimizer, device, nb_epochs):
         self.characters_mode = characters_mode
         self.model = model
         self.optimizer = optimizer
