@@ -7,16 +7,25 @@ import pandas as pd
 
 
 class OCRDataset(Dataset):
-    def __init__(self, tokenizer, device, test=False):
+    def __init__(self, characters_mode, tokenizer, device, test=False):
+        self.characters_mode = characters_mode
         self.tokenizer = tokenizer
         self.device = device
         self.image_resizer = Resize((64, 2304), antialias=True)
         if test:
-            self.data_path = "data_test/data"
-            self.labels_path = "data_test/test_tokens.csv"
+            if characters_mode == "handwritten":
+                self.data_path = "data_handwritten_test/data"
+                self.labels_path = "data_handwritten_test/test_tokens.csv"
+            elif characters_mode == "typed":
+                self.data_path = "data_test/data"
+                self.labels_path = "data_test/test_tokens.csv"
         else:
-            self.data_path = "data_all"
-            self.labels_path = "data_all/train_tokens.csv"
+            if characters_mode == "handwritten":
+                self.data_path = "data_handwritten"
+                self.labels_path = "data_handwritten/train_tokens.csv"
+            elif characters_mode == "typed":
+                self.data_path = "data_all"
+                self.labels_path = "data_all/train_tokens.csv"
         self.labels_df = pd.read_csv(self.labels_path)
         self.max_length = int(self.labels_df["token_length"].max())
 
