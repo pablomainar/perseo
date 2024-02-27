@@ -47,22 +47,27 @@ def store_data(process_id, generator, labels_dict, sentences_per_process):
             if count % 1000 == 0:
                 df = pd.concat([df, pd.DataFrame(labels)])
                 df.to_csv(os.path.join(datapath, set_+".csv"), index=False)
-
+                labels = {}
+                labels["path"] = []
+                labels["text"] = []
                 
 
 if __name__ == "__main__":
-    set_ = "train"
-    datapath = "data_new"
+    set_ = "test"
+
+    datapath = "../data_handwritten_test"
 
     print("Loading dataset...")
-    list_ds = pkl.load(open("wikipedia_test.pkl", "rb"))
+    list_ds = pkl.load(open("../wikipedia_test.pkl", "rb"))
     
     print("Starting...")
     sentences = []
     print(len(list_ds))
+
+
     for count, entry in enumerate(list_ds):
         text = entry["text"].numpy().decode("utf-8")
-        sentences_entry = preprocess_text(text, min_words=5, max_words=30)
+        sentences_entry = preprocess_text(text, min_words=3, max_words=25)
         sentences.extend(sentences_entry)
 
     nb_processes = 1
@@ -70,7 +75,9 @@ if __name__ == "__main__":
     sentences = [sentences[i:i + sentences_per_process] for i in range(0, len(sentences), sentences_per_process)]
     sentences = sentences[:nb_processes]
 
-    generators = [GeneratorFromStrings(sentences[i], language="es", count=sentences_per_process) for i in range(nb_processes)]
+    fonts = [os.path.abspath(os.path.join("fonts", "ttfs", p)) for p in os.listdir(os.path.join("fonts", "ttfs"))]
+
+    generators = [GeneratorFromStrings(sentences[i], language="es", count=sentences_per_process, fonts=fonts) for i in range(nb_processes)]
     manager = Manager()
     labels_dict = manager.dict()
 
@@ -85,12 +92,3 @@ if __name__ == "__main__":
         p.start()
     for p in processes:
         p.join()
-
-    '''labels = {}
-    labels["path"] = []
-    labels["text"] = []
-    for key, value in labels_dict.items():
-        labels["path"].append(str(key)+".jpg")
-        labels["text"].append(value)
-    df = pd.DataFrame(labels)
-    df.to_csv(os.path.join(datapath, set_+".csv"), index=False)'''

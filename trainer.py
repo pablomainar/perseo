@@ -5,14 +5,18 @@ import os
 import time
 
 class Trainer():
-    def __init__(self, model, optimizer, device, nb_epochs):
+    def __init__(self,characters_mode, model, optimizer, device, nb_epochs):
+        self.characters_mode = characters_mode
         self.model = model
         self.optimizer = optimizer
         self.device = device
         self.nb_epochs = nb_epochs
         self.train_losses = []
         self.test_losses = []
-        self.path_models = "models/"
+        if characters_mode == "handwritten":
+            self.path_models = "models_handwritten/"
+        elif characters_mode == "typed":
+            self.path_models = "models/"
         if not os.path.exists(self.path_models):
             os.mkdir(self.path_models)
 

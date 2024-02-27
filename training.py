@@ -5,6 +5,8 @@ from peft import LoraConfig, get_peft_model
 import torch
 from torch.utils.data import DataLoader
 
+characters_mode = "handwritten" # handwritten or typed
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 tokenizer = RobertaTokenizer.from_pretrained('PlanTL-GOB-ES/roberta-base-bne')
 model_trocr = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-small-stage1")
@@ -34,11 +36,11 @@ config = LoraConfig(
 )
 model = get_peft_model(model, config)
 model.to(device)
-train_dataset = OCRDataset(tokenizer=tokenizer, device=device, test=False)
-test_dataset = OCRDataset(tokenizer=tokenizer, device=device, test=True)
+train_dataset = OCRDataset(characters_mode=characters_mode, tokenizer=tokenizer, device=device, test=False)
+test_dataset = OCRDataset(characters_mode=characters_mode, tokenizer=tokenizer, device=device, test=True)
 train_dataloader = DataLoader(train_dataset, batch_size=6, shuffle=True)
 test_dataloader = DataLoader(test_dataset, batch_size=6, shuffle=True)
 optimizer = torch.optim.AdamW(params=model.parameters(), lr=5e-5)
-trainer = Trainer(model=model, optimizer=optimizer, device=device, nb_epochs=100)
+trainer = Trainer(characters_mode=characters_mode, model=model, optimizer=optimizer, device=device, nb_epochs=1000)
 trainer.train(train_dataloader=train_dataloader, test_dataloader=test_dataloader)
 
