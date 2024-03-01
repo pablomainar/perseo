@@ -17,7 +17,7 @@ encoder_config = encoder.config
 encoder_config.image_size = (64, 2304)
 model = VisionEncoderDecoderModel.from_encoder_decoder_pretrained(
     encoder_pretrained_model_name_or_path="pretrained_encoder",
-    decoder_pretrained_model_name_or_path="PlanTL-GOB-ES/roberta-base-bne'",
+    decoder_pretrained_model_name_or_path="PlanTL-GOB-ES/roberta-base-bne",
     encoder_config=encoder_config)
 
 model.config.decoder_start_token_id = tokenizer.cls_token_id

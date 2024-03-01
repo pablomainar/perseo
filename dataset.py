@@ -14,7 +14,7 @@ class OCRDataset(Dataset):
         self.image_resizer = Resize((64, 2304), antialias=True)
         if test:
             if characters_mode == "handwritten":
-                self.data_path = "data_handwritten_test/data"
+                self.data_path = "data_handwritten_test"
                 self.labels_path = "data_handwritten_test/test_tokens.csv"
             elif characters_mode == "typed":
                 self.data_path = "data_test/data"
@@ -31,7 +31,7 @@ class OCRDataset(Dataset):
 
     def __len__(self):
         return len(self.labels_df)
-
+        
     def __getitem__(self, idx):
         img_path = os.path.join(
             self.data_path,
